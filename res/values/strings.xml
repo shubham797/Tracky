@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">Tracky</string>
+    <string name="action_settings">Settings</string>
+    <string name="hello_world">Hello world!</string>
+    <string name="alarm">Alarm Mode</string>
+    <string name="track">Track Mode</string>
+    <string name="swit">Switch</string>
+
+</resources>
