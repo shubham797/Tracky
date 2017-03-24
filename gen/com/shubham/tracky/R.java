@@ -25,19 +25,19 @@ public final class R {
         public static final int ic_launcher=0x7f020001;
         public static final int images_b=0x7f020002;
         public static final int images_high=0x7f020003;
-        public static final int start=0x7f020004;
-        public static final int start_clicked=0x7f020005;
-        public static final int title=0x7f020006;
+        public static final int point=0x7f020004;
+        public static final int start=0x7f020005;
+        public static final int start_clicked=0x7f020006;
+        public static final int title=0x7f020007;
     }
     public static final class id {
-        public static final int action_settings=0x7f090007;
-        public static final int button1=0x7f090004;
-        public static final int button2=0x7f090005;
+        public static final int action_settings=0x7f090006;
         public static final int imageView1=0x7f090000;
-        public static final int listing=0x7f090006;
-        public static final int textView1=0x7f090001;
-        public static final int toggleButton1=0x7f090002;
-        public static final int toggleButton2=0x7f090003;
+        public static final int imageView2=0x7f090001;
+        public static final int listing=0x7f090005;
+        public static final int textView1=0x7f090002;
+        public static final int toggleButton1=0x7f090003;
+        public static final int toggleButton2=0x7f090004;
     }
     public static final class layout {
         public static final int activity_main=0x7f030000;

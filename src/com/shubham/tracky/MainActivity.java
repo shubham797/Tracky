@@ -10,12 +10,18 @@ import java.util.Set;
 import java.util.UUID;
 
 
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
 import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Vibrator;
 import android.app.Activity;
-import android.app.AlertDialog;
 import android.app.Dialog;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
@@ -28,9 +34,11 @@ import android.view.Menu;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
+import android.view.animation.Animation;
+import android.view.animation.RotateAnimation;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
-import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -52,12 +60,21 @@ public class MainActivity extends Activity {
 	String msgBuffer;
 	public InputStream mmInStream;
 	public OutputStream mmOutStream;
-	Button alarm;
-	Button track;
 	ToggleButton off;
 	boolean alert;
 	boolean mode = false;
 	MediaPlayer media = null;
+	SensorManager sm;
+	Sensor magnet;
+	float [] sensorData = new float[3];
+	ImageView image;
+	float fromDegrees = 0.f;
+	double longitude;
+	double latitude;
+	LocationManager lm;
+	LocationListener ll;
+	boolean sm_b;
+	boolean lm_b;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -68,13 +85,13 @@ public class MainActivity extends Activity {
 		setContentView(R.layout.activity_main);
 		handler = new Handler();
 		txt = (TextView) findViewById(R.id.textView1);
-		alarm = (Button) findViewById(R.id.button1);
-		track = (Button) findViewById(R.id.button2);
 		off = (ToggleButton)findViewById(R.id.toggleButton2);
-		alarm.setEnabled(false);
-		track.setEnabled(false);
+		image = (ImageView)findViewById(R.id.imageView2);
+		sm = (SensorManager) getSystemService(SENSOR_SERVICE);
+		lm = (LocationManager)getSystemService(Context.LOCATION_SERVICE);
 		off.setEnabled(false);
 		curr = this;
+		
 	}
 
 	@Override
@@ -120,6 +137,11 @@ public class MainActivity extends Activity {
 				media.stop();
 				media = null;
 			}
+			if(sm_b){
+				sm.unregisterListener(sel);
+				sm_b = false;
+			}
+		
 		}
 
 	}
@@ -149,7 +171,32 @@ public class MainActivity extends Activity {
 
 		listDialog.show();
 	}
-
+	SensorEventListener sel = new SensorEventListener(){	
+		@Override
+		public void onSensorChanged(SensorEvent arg0) {
+			// TODO Auto-generated method stub
+			float [] val = arg0.values;
+			sensorData[0] = val[0];
+			sensorData[1] = val[1];
+			sensorData[2] = val[2];
+			txt.setText(new String(val[0] + " " + val[1] + " " + val[2]));
+			RotateAnimation rotate = new RotateAnimation(fromDegrees, -(val[0]-90),Animation.RELATIVE_TO_SELF,0.5f,Animation.RELATIVE_TO_SELF,0.5f);
+			rotate.setDuration(100);
+			image.startAnimation(rotate);
+			fromDegrees = -(val[0]-90);
+		}
+		
+		@Override
+		public void onAccuracyChanged(Sensor arg0, int arg1) {
+			// TODO Auto-generated method stub
+		}
+	};
+	public void data(){
+		magnet = sm.getDefaultSensor(Sensor.TYPE_ORIENTATION);
+		sm_b = sm.registerListener(sel, magnet,
+				SensorManager.SENSOR_DELAY_GAME);
+	}
+	
 	public class clickable implements OnItemClickListener {
 
 		@Override
@@ -170,6 +217,19 @@ public class MainActivity extends Activity {
 		media.start();
 		Vibrator vib = (Vibrator) curr.getSystemService(Context.VIBRATOR_SERVICE);
 		vib.vibrate(5000);
+		
+		msgBuffer = "2";
+		Thread t = new Thread(new write_message());
+		t.start();
+		
+		
+		// data() should be called
+		data();
+		
+		
+		// enable gps location
+		ll = new locater();
+		lm.requestLocationUpdates(LocationManager.GPS_PROVIDER, 10000, 5, ll);
 	}
 	
 
@@ -177,17 +237,15 @@ public class MainActivity extends Activity {
 		BluetoothAdapter mBluetoothAdapter = null;
 		String data = null;
 
-		final Runnable updateUI;
 		private BluetoothSocket btSocket = null;
 		private final UUID uuid = UUID
 				.fromString("00001101-0000-1000-8000-00805F9B34FB");
 
 		public BluetoothServer(Handler handler, Runnable updateUI,
 				String mac_address, Context cur) {
-			this.updateUI = updateUI;
 
 			mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
-			BluetoothDevice device = mBluetoothAdapter
+			final BluetoothDevice device = mBluetoothAdapter
 					.getRemoteDevice(mac_address);
 			try {
 				btSocket = device.createRfcommSocketToServiceRecord(uuid);
@@ -203,13 +261,9 @@ public class MainActivity extends Activity {
 				@Override
 				public void run() {
 					// TODO Auto-generated method stub
-					txt.setText("Connected");
+					txt.setText("Connected :" + device.getName());
 				}
 			});
-		}
-
-		public String getBluetoothServer() {
-			return data;
 		}
 	}
 
@@ -234,6 +288,7 @@ public class MainActivity extends Activity {
 
 						if (alert && mode){
 							func();
+
 						}
 						//txt.setText(result);
 					}
@@ -276,12 +331,49 @@ public class MainActivity extends Activity {
 			Thread t = new Thread(new read_message());
 			t.start();
 			off.setEnabled(true);
-			//alarm.setEnabled(true);
-			//track.setEnabled(true);
 
 		}
 	}
+	
+	public class locater implements LocationListener{
 
+		@Override
+		public void onLocationChanged(Location arg0) {
+			// TODO Auto-generated method stub
+			latitude = arg0.getLatitude();
+			longitude = arg0.getLongitude();
+			txt.setText("LAT "+latitude + " ,LON " + longitude);
+		}
+
+		@Override
+		public void onProviderDisabled(String arg0) {
+			// TODO Auto-generated method stub
+			
+		}
+
+		@Override
+		public void onProviderEnabled(String arg0) {
+			// TODO Auto-generated method stub
+			
+		}
+
+		@Override
+		public void onStatusChanged(String arg0, int arg1, Bundle arg2) {
+			// TODO Auto-generated method stub
+			
+		}
+	
+	}
+	
+	@Override
+	protected void onPause() {
+		// TODO Auto-generated method stub
+		super.onPause();
+		if(media != null){
+			media.stop();
+			media = null;
+		}
+	}
 	@Override
 	protected void onDestroy() {
 		// TODO Auto-generated method stub
@@ -295,6 +387,9 @@ public class MainActivity extends Activity {
 		if(media != null){
 			media.stop();
 			media = null;
+		}
+		if(sm_b){
+			sm.unregisterListener(sel);
 		}
 	}
 
