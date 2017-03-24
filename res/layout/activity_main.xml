@@ -3,12 +3,20 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
+    android:background="@drawable/grayback_border"
     android:paddingBottom="@dimen/activity_vertical_margin"
     android:paddingLeft="@dimen/activity_horizontal_margin"
     android:paddingRight="@dimen/activity_horizontal_margin"
     android:paddingTop="@dimen/activity_vertical_margin"
-    android:weightSum="10"
+    android:weightSum="12"
     tools:context=".MainActivity" >
+
+    <ImageView
+        android:id="@+id/imageView1"
+        android:layout_weight="3"
+        android:layout_width="wrap_content"
+        android:layout_height="0dp"
+        android:src="@drawable/title" />
 
     <TextView
         android:id="@+id/textView1"
@@ -26,7 +34,8 @@
         android:layout_gravity="center_horizontal"
         android:onClick="bluetooth_switch"
         android:layout_weight="1"
-        android:text="@string/swit" />
+        android:background="@drawable/start"
+        />
 
     <ToggleButton
         android:id="@+id/toggleButton2"

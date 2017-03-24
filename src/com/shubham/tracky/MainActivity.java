@@ -1,6 +1,5 @@
 package com.shubham.tracky;
 
-import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -11,9 +10,12 @@ import java.util.Set;
 import java.util.UUID;
 
 
+import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Vibrator;
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.app.Dialog;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
@@ -24,6 +26,8 @@ import android.content.Intent;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.View;
+import android.view.Window;
+import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -31,6 +35,7 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.AdapterView.OnItemClickListener;
+import android.widget.ToggleButton;
 
 public class MainActivity extends Activity {
 
@@ -40,7 +45,7 @@ public class MainActivity extends Activity {
 	List<BluetoothDevice> list;
 	ConnectedThread mConnectedThread = null;
 	Dialog listDialog;
-	String [] val2;
+	String[] val2;
 	Context curr;
 	TextView txt;
 	Handler handler;
@@ -49,17 +54,27 @@ public class MainActivity extends Activity {
 	public OutputStream mmOutStream;
 	Button alarm;
 	Button track;
+	ToggleButton off;
+	boolean alert;
+	boolean mode = false;
+	MediaPlayer media = null;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+		requestWindowFeature(Window.FEATURE_NO_TITLE);
+		getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
+				WindowManager.LayoutParams.FLAG_FULLSCREEN);
 		setContentView(R.layout.activity_main);
 		handler = new Handler();
-		txt = (TextView)findViewById(R.id.textView1);
-		alarm = (Button)findViewById(R.id.button1);
-		track = (Button)findViewById(R.id.button2);
+		txt = (TextView) findViewById(R.id.textView1);
+		alarm = (Button) findViewById(R.id.button1);
+		track = (Button) findViewById(R.id.button2);
+		off = (ToggleButton)findViewById(R.id.toggleButton2);
 		alarm.setEnabled(false);
 		track.setEnabled(false);
+		off.setEnabled(false);
+		curr = this;
 	}
 
 	@Override
@@ -71,17 +86,15 @@ public class MainActivity extends Activity {
 
 	public void bluetooth_switch(View v) {
 		// TODO Auto-generated method stub
-	
 		mainAdapter = BluetoothAdapter.getDefaultAdapter();
 
 		if (!activated) {
-				Intent startBluetooth = new Intent(
-						BluetoothAdapter.ACTION_REQUEST_ENABLE);
-				startActivity(startBluetooth);
-				activated = true;
-				bluetooth_switch(v);
-		}
-		else if (activated) {
+			Intent startBluetooth = new Intent(
+					BluetoothAdapter.ACTION_REQUEST_ENABLE);
+			startActivity(startBluetooth);
+			activated = true;
+			bluetooth_switch(v);
+		} else if (activated) {
 			if (mainAdapter != null) {
 				if (mainAdapter.isDiscovering()) {
 					mainAdapter.cancelDiscovery();
@@ -91,14 +104,28 @@ public class MainActivity extends Activity {
 			showdialog(set);
 		}
 	}
-	
-	public void send_activate(View v){
-		msgBuffer = "TRACKY";
-		Thread t = new Thread(new write_message());
-		t.start();
+
+	public void send_activate(View v) {
+		mode = off.isChecked();
+		if (mode){
+			msgBuffer = "1";
+			Thread t = new Thread(new write_message());
+			t.start();
+		}else{
+			alert = mode;
+			msgBuffer = "0";
+			Thread t = new Thread(new write_message());
+			t.start();
+			if(media != null){
+				media.stop();
+				media = null;
+			}
+		}
+
 	}
+
 	private void showdialog(Set<BluetoothDevice> set) {
-		String [] val = new String[set.size()];
+		String[] val = new String[set.size()];
 		val2 = new String[set.size()];
 		int i = 0;
 
@@ -114,29 +141,38 @@ public class MainActivity extends Activity {
 		View v = li.inflate(R.layout.bluetooth_devices, null, false);
 		listDialog.setContentView(v);
 		listDialog.setCancelable(true);
-		// there are a lot of settings, for dialog, check them all out!
 
 		ListView list1 = (ListView) listDialog.findViewById(R.id.listing);
 		list1.setOnItemClickListener(new clickable());
 		list1.setAdapter(new ArrayAdapter<String>(this,
 				android.R.layout.simple_list_item_1, val));
-		// now that the dialog is set up, it's time to show it
+
 		listDialog.show();
 	}
-	
+
 	public class clickable implements OnItemClickListener {
 
 		@Override
 		public void onItemClick(AdapterView<?> arg0, View arg1, final int arg2,
 				long arg3) {
-			// TODO Auto-generated method stub			
+			// TODO Auto-generated method stub
 			String mac_address = val2[arg2];
 			BluetoothServer blue = new BluetoothServer(handler, null,
-					mac_address,curr);
+					mac_address, curr);
 			listDialog.dismiss();
 		}
 	}
 	
+	private void func() {
+		// TODO Auto-generated method stub
+		
+		media = MediaPlayer.create(curr, R.raw.alarm );
+		media.start();
+		Vibrator vib = (Vibrator) curr.getSystemService(Context.VIBRATOR_SERVICE);
+		vib.vibrate(5000);
+	}
+	
+
 	class BluetoothServer {
 		BluetoothAdapter mBluetoothAdapter = null;
 		String data = null;
@@ -147,7 +183,7 @@ public class MainActivity extends Activity {
 				.fromString("00001101-0000-1000-8000-00805F9B34FB");
 
 		public BluetoothServer(Handler handler, Runnable updateUI,
-				String mac_address,Context cur) {
+				String mac_address, Context cur) {
 			this.updateUI = updateUI;
 
 			mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
@@ -163,7 +199,7 @@ public class MainActivity extends Activity {
 			}
 			mConnectedThread = new ConnectedThread(btSocket);
 			handler.post(new Runnable() {
-				
+
 				@Override
 				public void run() {
 					// TODO Auto-generated method stub
@@ -177,29 +213,39 @@ public class MainActivity extends Activity {
 		}
 	}
 
-	public class read_message implements Runnable{
+	public class read_message implements Runnable {
 		byte[] buff = new byte[8];
+
 		@Override
 		public void run() {
 			// TODO Auto-generated method stub
 			Scanner s = new Scanner(mmInStream);
-			while(true){
+			while (true) {
 				final String result = s.hasNext() ? s.next() : "";
 				handler.post(new Runnable() {
-					
+
 					@Override
 					public void run() {
 						// TODO Auto-generated method stub
-						txt.setText(result);
-						
+						if (result.equals(new String("ALERT"))) {
+							txt.setText(new String("Alert Mode"));
+							alert = true;
+						}
+
+						if (alert && mode){
+							func();
+						}
+						//txt.setText(result);
 					}
 				});
 			}
-			
-		}	
+
+		}
 	}
-	public class write_message implements Runnable{
+
+	public class write_message implements Runnable {
 		PrintWriter print;
+
 		@Override
 		public void run() {
 			// TODO Auto-generated method stub
@@ -208,7 +254,7 @@ public class MainActivity extends Activity {
 			print.flush();
 		}
 	}
-	
+
 	private class ConnectedThread {
 
 		// creation of the connect thread
@@ -221,16 +267,18 @@ public class MainActivity extends Activity {
 				tmpIn = socket.getInputStream();
 				tmpOut = socket.getOutputStream();
 			} catch (IOException e) {
-				Toast.makeText(getApplicationContext(), "Server Socket Error", Toast.LENGTH_SHORT).show();
+				Toast.makeText(getApplicationContext(), "Server Socket Error",
+						Toast.LENGTH_SHORT).show();
 			}
-			//Toast.makeText(getApplicationContext(), "Connected To Device", Toast.LENGTH_SHORT).show();
+
 			mmInStream = tmpIn;
 			mmOutStream = tmpOut;
 			Thread t = new Thread(new read_message());
 			t.start();
-			alarm.setEnabled(true);
-			track.setEnabled(true);
-			
+			off.setEnabled(true);
+			//alarm.setEnabled(true);
+			//track.setEnabled(true);
+
 		}
 	}
 
@@ -243,6 +291,10 @@ public class MainActivity extends Activity {
 		} catch (Throwable e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+		}
+		if(media != null){
+			media.stop();
+			media = null;
 		}
 	}
 
