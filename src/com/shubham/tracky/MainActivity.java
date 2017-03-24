@@ -170,44 +170,11 @@ public class MainActivity extends Activity {
 					txt.setText("Connected");
 				}
 			});
-			// I send a character when resuming.beginning transmission to check
-			// device is connected
-			// If it is not an exception will be thrown in the write method and
-			// finish() will be called
-			// mConnectedThread.write("f");
 		}
 
 		public String getBluetoothServer() {
 			return data;
 		}
-
-		/*
-		 * public void run() { BluetoothServerSocket serverSocket;
-		 * BluetoothSocket socket = null; try { serverSocket = mBluetoothAdapter
-		 * .listenUsingRfcommWithServiceRecord("helloService", UUID
-		 * .fromString("00001101-0000-1000-8000-00805F9B34FB"));
-		 * 
-		 * socket = serverSocket.accept(); // block for connect
-		 * 
-		 * data = "Accept connection"; handler.post(updateUI);
-		 * 
-		 * DataInputStream in = new DataInputStream(socket.getInputStream());
-		 * DataOutputStream out = new DataOutputStream(
-		 * socket.getOutputStream());
-		 * 
-		 * data = in.readUTF(); // Read from client
-		 * 
-		 * out.writeUTF("Echo " + data); // Send to client
-		 * 
-		 * handler.post(updateUI);
-		 * 
-		 * Log.d("EchoServer", data); // Log message
-		 * 
-		 * serverSocket.close(); socket.close(); } catch (Exception e) {
-		 * 
-		 * } }
-		 */
-		// create new class for connect thread
 	}
 
 	public class read_message implements Runnable{
@@ -225,7 +192,6 @@ public class MainActivity extends Activity {
 						// TODO Auto-generated method stub
 						txt.setText(result);
 						
-						// Use this data to call new desired functios
 					}
 				});
 			}
@@ -267,16 +233,6 @@ public class MainActivity extends Activity {
 			
 		}
 	}
-			/*
-			byte[] msgBuffer = input.getBytes(); // converts entered String
-													// into bytes
-			try {
-				mmOutStream.write(msgBuffer); // write bytes over BT
-												// connection via outstream
-			} catch (IOException e) {
-				// if you cannot write, close the application
-			}
-			*/
 
 	@Override
 	protected void onDestroy() {
