@@ -69,12 +69,15 @@ public class MainActivity extends Activity {
 	float [] sensorData = new float[3];
 	ImageView image;
 	float fromDegrees = 0.f;
-	double longitude;
-	double latitude;
+	double longitude =  81.770823;
+	double latitude = 25.432131;
+	double t_longitude;
+	double t_latitude;
 	LocationManager lm;
 	LocationListener ll;
 	boolean sm_b;
 	boolean lm_b;
+	double dist_src_goal;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -119,6 +122,7 @@ public class MainActivity extends Activity {
 			}
 			Set<BluetoothDevice> set = mainAdapter.getBondedDevices();
 			showdialog(set);
+
 		}
 	}
 
@@ -128,6 +132,7 @@ public class MainActivity extends Activity {
 			msgBuffer = "1";
 			Thread t = new Thread(new write_message());
 			t.start();
+			txt.setText("Connected ");
 		}else{
 			alert = mode;
 			msgBuffer = "0";
@@ -141,7 +146,7 @@ public class MainActivity extends Activity {
 				sm.unregisterListener(sel);
 				sm_b = false;
 			}
-		
+			txt.setText("Connected ");
 		}
 
 	}
@@ -171,6 +176,16 @@ public class MainActivity extends Activity {
 
 		listDialog.show();
 	}
+	public int compute(){
+		dist_src_goal = Math.sqrt(Math.pow((latitude - t_latitude),2) + Math.pow(longitude-t_longitude,2));
+		dist_src_goal *= 975.13 * 15 ;
+
+		double angle_s_g = Math.PI/2.0 - Math.atan2(t_latitude - latitude, t_longitude - longitude);
+		int degrees = (int) Math.toDegrees(angle_s_g);
+		
+		return degrees;
+		
+	}
 	SensorEventListener sel = new SensorEventListener(){	
 		@Override
 		public void onSensorChanged(SensorEvent arg0) {
@@ -179,11 +194,13 @@ public class MainActivity extends Activity {
 			sensorData[0] = val[0];
 			sensorData[1] = val[1];
 			sensorData[2] = val[2];
-			txt.setText(new String(val[0] + " " + val[1] + " " + val[2]));
-			RotateAnimation rotate = new RotateAnimation(fromDegrees, -(val[0]-90),Animation.RELATIVE_TO_SELF,0.5f,Animation.RELATIVE_TO_SELF,0.5f);
+			//txt.setText(new String(val[0] + " " + val[1] + " " + val[2]));
+			int values = compute();
+			RotateAnimation rotate = new RotateAnimation(fromDegrees, -(val[0]-90-values),Animation.RELATIVE_TO_SELF,0.5f,Animation.RELATIVE_TO_SELF,0.5f);
 			rotate.setDuration(100);
 			image.startAnimation(rotate);
-			fromDegrees = -(val[0]-90);
+			txt.setText(new String("Estimated Distance : "+ dist_src_goal));
+			fromDegrees = -(val[0]-90-values);
 		}
 		
 		@Override
@@ -223,7 +240,7 @@ public class MainActivity extends Activity {
 		t.start();
 		
 		
-		// data() should be called
+		// data() should be called for sensor values
 		data();
 		
 		
@@ -281,14 +298,27 @@ public class MainActivity extends Activity {
 					@Override
 					public void run() {
 						// TODO Auto-generated method stub
+						char [] result_arr = result.toCharArray();
 						if (result.equals(new String("ALERT"))) {
 							txt.setText(new String("Alert Mode"));
 							alert = true;
 						}
 
-						if (alert && mode){
+						if (alert && mode && result.equals(new String("ALERT"))){
 							func();
 
+						}
+						if (alert && mode && result_arr[0] == 'G'){
+							try{
+								String [] reso = result.split(new String("_"));
+								t_latitude = Double.parseDouble(reso[1]);
+								t_longitude = Double.parseDouble(reso[2]);
+							}catch(Exception e){
+								t_latitude = latitude+0.000001;
+								//t_latitude = 25.432131;
+								t_longitude = longitude+0.000001;
+								//t_longitude = 81.770823;
+							}
 						}
 						//txt.setText(result);
 					}
@@ -342,7 +372,7 @@ public class MainActivity extends Activity {
 			// TODO Auto-generated method stub
 			latitude = arg0.getLatitude();
 			longitude = arg0.getLongitude();
-			txt.setText("LAT "+latitude + " ,LON " + longitude);
+			//txt.setText("LAT "+latitude + " ,LON " + longitude);
 		}
 
 		@Override
