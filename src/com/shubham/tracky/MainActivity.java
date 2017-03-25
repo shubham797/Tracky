@@ -104,7 +104,7 @@ public class MainActivity extends Activity {
 		return true;
 	}
 
-	public void bluetooth_switch(View v) {
+	public void bluetooth_switch(View v) {	// Activate Bluetooth device
 		// TODO Auto-generated method stub
 		mainAdapter = BluetoothAdapter.getDefaultAdapter();
 
@@ -120,15 +120,15 @@ public class MainActivity extends Activity {
 					mainAdapter.cancelDiscovery();
 				}
 			}
-			Set<BluetoothDevice> set = mainAdapter.getBondedDevices();
+			Set<BluetoothDevice> set = mainAdapter.getBondedDevices();	// Get the paired devices list
 			showdialog(set);
 
 		}
 	}
 
-	public void send_activate(View v) {
+	public void send_activate(View v) {		// Activate the tracking mode
 		mode = off.isChecked();
-		if (mode){
+		if (mode){	
 			msgBuffer = "1";
 			Thread t = new Thread(new write_message());
 			t.start();
@@ -151,7 +151,7 @@ public class MainActivity extends Activity {
 
 	}
 
-	private void showdialog(Set<BluetoothDevice> set) {
+	private void showdialog(Set<BluetoothDevice> set) {		// Shows the list in form of dialog box
 		String[] val = new String[set.size()];
 		val2 = new String[set.size()];
 		int i = 0;
@@ -176,7 +176,7 @@ public class MainActivity extends Activity {
 
 		listDialog.show();
 	}
-	public int compute(){
+	public int compute(){	// General Computation using coordinates for distance and direction
 		dist_src_goal = Math.sqrt(Math.pow((latitude - t_latitude),2) + Math.pow(longitude-t_longitude,2));
 		dist_src_goal *= 975.13 * 15 ;
 
@@ -186,7 +186,7 @@ public class MainActivity extends Activity {
 		return degrees;
 		
 	}
-	SensorEventListener sel = new SensorEventListener(){	
+	SensorEventListener sel = new SensorEventListener(){	// For getting data from the magnetometer
 		@Override
 		public void onSensorChanged(SensorEvent arg0) {
 			// TODO Auto-generated method stub
@@ -208,7 +208,7 @@ public class MainActivity extends Activity {
 			// TODO Auto-generated method stub
 		}
 	};
-	public void data(){
+	public void data(){	// Enable sensor data
 		magnet = sm.getDefaultSensor(Sensor.TYPE_ORIENTATION);
 		sm_b = sm.registerListener(sel, magnet,
 				SensorManager.SENSOR_DELAY_GAME);
@@ -227,7 +227,7 @@ public class MainActivity extends Activity {
 		}
 	}
 	
-	private void func() {
+	private void func() {	// States activated after alarm triggers
 		// TODO Auto-generated method stub
 		
 		media = MediaPlayer.create(curr, R.raw.alarm );
@@ -284,7 +284,7 @@ public class MainActivity extends Activity {
 		}
 	}
 
-	public class read_message implements Runnable {
+	public class read_message implements Runnable {		//Thread for reading data from bluetooth socket
 		byte[] buff = new byte[8];
 
 		@Override
@@ -313,7 +313,7 @@ public class MainActivity extends Activity {
 								String [] reso = result.split(new String("_"));
 								t_latitude = Double.parseDouble(reso[1]);
 								t_longitude = Double.parseDouble(reso[2]);
-							}catch(Exception e){
+							}catch(Exception e){	// Just to enable tracking working
 								t_latitude = latitude+0.000001;
 								//t_latitude = 25.432131;
 								t_longitude = longitude+0.000001;
@@ -328,7 +328,7 @@ public class MainActivity extends Activity {
 		}
 	}
 
-	public class write_message implements Runnable {
+	public class write_message implements Runnable {	// Thread for writing data to the socket
 		PrintWriter print;
 
 		@Override
@@ -340,7 +340,7 @@ public class MainActivity extends Activity {
 		}
 	}
 
-	private class ConnectedThread {
+	private class ConnectedThread {		// Upon the connection with required device
 
 		// creation of the connect thread
 		public ConnectedThread(BluetoothSocket socket) {
@@ -365,7 +365,7 @@ public class MainActivity extends Activity {
 		}
 	}
 	
-	public class locater implements LocationListener{
+	public class locater implements LocationListener{	// Locationlistener class for GPS working
 
 		@Override
 		public void onLocationChanged(Location arg0) {
